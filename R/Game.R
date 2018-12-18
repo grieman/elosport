@@ -1,8 +1,8 @@
 Game <- R6::R6Class("Game",
     public = list(
       date = NULL,
-      home = NULL,
-      away = NULL,
+      home_team = NULL,
+      away_team = NULL,
       home_score = NULL,
       away_score = NULL,
       winner = NULL,
@@ -63,13 +63,22 @@ Game <- R6::R6Class("Game",
         #  }
         self$away_score <- away_score
         self$point_diff <- home_score - away_score
+
+        if(self$home_score > self$away_score){
+          self$winner <- self$home_team
+          self$loser <- self$away_team
+        } else {
+          self$winner <- self$away_team
+          self$loser <- self$home_team
+        }
+
       },
       process = function(){
         self$spread <- self$point_diff / self$score_factor
         self$prediction <- 1 / (10 ^ (-(self$home_team$elo_score - self$away_team$elo_score) / self$score_factor^2) + 1)
         self$mov_mod <- log(abs(self$point_diff) + self$mov_score_add) * (self$mov_score_mult / (
-          (self$winner$elo_score - self$loser$elo_score) * self$elo_score_mult + self$elo_score_add))
-        self$elo_change <- log(self$point_diff + 1) * self$k * self$mov_mod
+          (self$winner$elo_score - self$loser$elo_score) * self$mov_elo_mult + self$mov_elo_add))
+        self$elo_change <- self$prediction * self$k * self$mov_mod
         self$winner$add_game(self, self$elo_change)
         self$loser$add_game(self, (self$elo_change * -1))
         }
