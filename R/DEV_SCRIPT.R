@@ -1,3 +1,5 @@
+library(magrittr)
+
 df_1987 <- read.csv("data/English_Premiership_1987.csv")
 
 elo_params <- make_elo_params(0, 20, 2.2, .001, 1, 2.2, 10)
@@ -17,3 +19,5 @@ schedule_1987$make_games(all_teams)
 for (game in schedule_1987$games){
   game$process()
 }
+
+all_teams$Bath$history
