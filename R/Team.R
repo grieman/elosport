@@ -3,7 +3,11 @@ Team <- R6::R6Class("Team",
         alias = NULL,
         elo_score = NULL,
         games = c(),
-        history = data.frame(),
+        history = data.frame(Date = as.Date(character()),
+                             Opponent = character(),
+                             Location = character(),
+                             Result = character(),
+                             Elo = character()),
         initialize = function(alias = NA, elo_start = NA){
           self$alias <- alias
           self$elo_score <- elo_start
@@ -22,13 +26,15 @@ Team <- R6::R6Class("Team",
             location <- "H"
           } else {location <- "A"}
 
-          game_record <- list("Date" = match$date,
+          game_record <- data.frame("Date" = match$date,
                               "Opponent" = opponent,
                               "Location" = location,
                               "Result" = result,
                               "Elo" = self$elo_score)
+
           self$history %<>% rbind(game_record)
-          self$history[c("Date","Opponent","Location","Result")] %<>% apply(2, as.character)
+          self$history[c("Opponent","Location","Result")] %<>% apply(2, as.character)
+          #if self$history$Date is not a date object, then make string, otherwise keep as date
         }
         )
       )
