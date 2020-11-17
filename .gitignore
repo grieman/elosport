@@ -3,3 +3,5 @@
 .Rbuildignore
 *.Rproj
 *.csv
+doc
+Meta

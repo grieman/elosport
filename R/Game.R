@@ -1,3 +1,4 @@
+#' @export
 Game <- R6::R6Class("Game",
     public = list(
       date = NULL,

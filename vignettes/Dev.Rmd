@@ -1,17 +1,21 @@
 ---
-title: "Dev"
-output: html_notebook
+title: "Dev Work"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Dev Work}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
 
-```{r}
+```{r, Setup Schedule}
 library(magrittr)
 library(ggplot2)
 library(lubridate)
+library(elosport)
 
 '%nin%' <- function(x,y)!('%in%'(x,y))
 
 elo_params <- make_elo_params(0, 20, 2.2, .001, 1, 2.2, 5)
-
 
 premiership <- list()
 
@@ -39,6 +43,7 @@ schedule$Home_Score %<>% as.numeric()
 schedule$Home_Team <- gsub('\\s+', '', schedule$Home_Team)
 schedule$Away_Team <- gsub('\\s+', '', schedule$Away_Team)
 
+## club names change over time, need to use a manual mapping to standardize
 names <- schedule$Home_Team %>% unique %>% sort
 proper_names <- c(rep("Bath",2), rep("Bedford",2), rep("Bristol", 3), "Coventry", "Exeter", rep("Gloucester",3), 
                   "Harlequins", rep("Leeds", 2), rep("Leicester", 2), "LiverpoolStHelens", "LondonIrish", "LondonScottish", "Wasps",
@@ -48,24 +53,23 @@ names_df <- data.frame('rawname' = names, 'proper_names' = proper_names)
 
 schedule$Home_Team <- names_df$proper_names[match(schedule$Home_Team, names_df$rawname)]
 schedule$Away_Team <- names_df$proper_names[match(schedule$Away_Team, names_df$rawname)]
-
-#schedule <- schedule %>% head(60)
-
 ```
 
-```{r}
+```{r, Prepare Teams}
+# Create a list containing each team that competes in the league
 team_list <- list()
 for (team in schedule$Home_Team %>% unique){
-  #print(team)
   if (schedule[which(schedule$Home_Team == team), ][1, ]$Date < ymd("19880101")) {
     start_elo <- 2500
-  } else {
+  } else { # Teams that join the premiership do so from lower tiers, so _should_ have lower elos
     start_elo <- 2250
   }
-  
   team_list[[team]] <- Team$new(team, start_elo)
 }
+```
 
+```{r, Process Games}
+# Now we iterate through each game in the schedule
 game_list <- list()
 
 for (row in 1:nrow(schedule)) {
@@ -86,28 +90,26 @@ for (row in 1:nrow(schedule)) {
 }
 ```
 
-```{r}
+```{r, ELO Plot}
+## This is an ugly, ugly plot, but it looks as expected - may be better to show as scatter or individual seasons
+
 elo_plot <- ggplot()
 
 for (team in team_list){
-  #team$history %>% dim %>% print
   elo_plot <- elo_plot + geom_line(data = team$history, aes(Date, Elo))
 }
 
-elo_plot #+ scale_color_manual()
+elo_plot #+ scale_color_manual() #TO BE ADDED, COLOR PER TEAM
 
 ```
 
-
-
-
-```{r}
+```{r, Sanity Check}
 for (team in team_list){
   team$alias %>% print
   team$elo_score %>% print
 }
 ```
-```{r}
+```{r, One Club History}
 team_list[['Gloucester']]$history
 ```
 

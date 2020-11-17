@@ -1,4 +1,6 @@
-#' Title
+#' make_elo_params
+#'
+#' This is just a handy way to set/change variables used by classes and functions. Will likely be removed
 #'
 #' @param home_advantage
 #' @param k

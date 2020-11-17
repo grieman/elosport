@@ -1,3 +1,4 @@
+#' @export
 Team <- R6::R6Class("Team",
       public = list(
         alias = NULL,
