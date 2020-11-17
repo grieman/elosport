@@ -15,26 +15,31 @@ Team <- R6::R6Class("Team",
         add_game = function(match, elo_change){
           self$games %<>% append(match)
           self$elo_score %<>% add(elo_change)
-          if(match$winner$alias == self$alias){
-            result <- "W"
-            opponent <- match$loser$alias
-          } else {
-            result <- "L"
-            opponent <- match$winner$alias
-          }
+          # if(match$winner$alias == self$alias){
+          #   result <- "W"
+          #   opponent <- match$loser$alias
+          # } else {
+          #   result <- "L"
+          #   opponent <- match$winner$alias
+          # }
           if (match$home_team$alias == self$alias){
             location <- "H"
-          } else {location <- "A"}
+            opponent <- match$away_team$alias
+          } else {
+            location <- "A"
+            opponent <- match$home_team$alias
+          }
 
           game_record <- data.frame("Date" = match$date,
                               "Opponent" = opponent,
                               "Location" = location,
-                              "Result" = result,
-                              "Elo" = self$elo_score)
+                              #"Result" = result,
+                              "Elo" = self$elo_score,
+                              "Score" = paste0(match$home_score, '-', match$away_score))
 
           self$history %<>% rbind(game_record)
-          self$history[c("Opponent","Location","Result")] %<>% apply(2, as.character)
-          #if self$history$Date is not a date object, then make string, otherwise keep as date
+          self$history[c("Opponent","Location")] %<>% apply(2, as.character)
+          self$history <- self$history[order(self$history$Date),]
         }
         )
       )
