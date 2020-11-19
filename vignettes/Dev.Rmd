@@ -12,10 +12,12 @@ library(magrittr)
 library(ggplot2)
 library(lubridate)
 library(elosport)
+library(tidyverse)
+
 
 '%nin%' <- function(x,y)!('%in%'(x,y))
 
-elo_params <- make_elo_params(0, 20, 2.2, .001, 1, 2.2, 5)
+elo_params <- make_elo_params(0, 25, 2.2, .001, 1, 2.2, 5)
 
 premiership <- list()
 
@@ -84,11 +86,41 @@ for (row in 1:nrow(schedule)) {
                             neutral_site = FALSE)
     
     game_list[[game_name]]$process()
-    if(game_list[[game_name]]$elo_change > 1000){
-      stop()
-    }
 }
 ```
+
+```{r}
+league_history <- data.frame()
+for (team in team_list){
+  league_history %<>% rbind(team$history %>% cbind('Team' = team$alias))
+}
+league_history <- league_history[order(league_history$Date), ]
+league_history$week <- league_history$Date %>% cut('week') %>% ymd()
+
+league_history %<>% mutate(match_week = match(Date, unique(Date)))
+
+library(plotly)
+library(htmlwidgets)
+
+myPlot <- plot_ly(league_history, x = ~Date, y = ~Elo, color = ~Team, mode = 'lines')
+myPlot
+#ggplot(league_history, aes(x=match_week, y=Elo)) +
+#  geom_line(aes(color = Team))
+
+```
+
+
+```{r}
+library(dygraphs)
+
+dy_prep <- league_history %>% select(Date, Team, Elo) %>% setDT()
+
+dy_data <- dcast(dy_prep, Date ~ Team, value.var = 'Elo', fun.aggregate = mean, fill = NA) %>% fill(names(.))
+
+dygraph(dy_data) %>% dyHighlight(highlightSeriesOpts = list(strokeWidth = 3))
+
+```
+
 
 ```{r, ELO Plot}
 ## This is an ugly, ugly plot, but it looks as expected - may be better to show as scatter or individual seasons
