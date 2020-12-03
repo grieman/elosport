@@ -13,4 +13,4 @@ LazyData: true
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
 Imports: R6, magrittr
-Suggests: knitr, rmarkdown, lubridate, ggplot2, plyr, qpdf
+Suggests: knitr, rmarkdown, lubridate, ggplot2, plyr, qpdf, tidyverse

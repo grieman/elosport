@@ -68,7 +68,7 @@ Game <- R6::R6Class("Game",
         self$away_score <- away_score
         self$home_elo <- self$home_team$elo_score
         self$away_elo <- self$away_team$elo_score
-        self$point_diff <- self$home_score - self$away_score
+        self$point_diff <- self$home_score - self$away_score - elo_params$home_advantage
         self$elo_diff <- self$home_elo - self$away_elo
 
         # if(self$home_score > self$away_score){
@@ -82,12 +82,20 @@ Game <- R6::R6Class("Game",
       },
       process = function(){
         result <- (sign(self$point_diff) + 1) / 2
+
+        if (result == 0){
+          elo_diff_for_mov <- (self$away_team$elo_score - self$home_team$elo_score)
+        } else if (result == 0.5){
+          elo_diff_for_mov <- 1
+        } else if (result == 1){
+          elo_diff_for_mov <- (self$home_team$elo_score - self$away_team$elo_score)
+        }
+
         self$spread <- self$elo_diff / self$score_factor
         self$prediction <- 1 / (10 ^ (-(self$home_team$elo_score - self$away_team$elo_score) / self$score_factor^2) + 1)
 
-
         self$mov_mod <- log(abs(self$point_diff) + self$mov_score_add) * (self$mov_score_mult / (
-          (self$home_team$elo_score - self$away_team$elo_score) * sign(self$point_diff) * self$mov_elo_mult + self$mov_elo_add))
+          elo_diff_for_mov * self$mov_elo_mult + self$mov_elo_add))
 
         self$elo_change <- (result - self$prediction) * self$k * self$mov_mod
 

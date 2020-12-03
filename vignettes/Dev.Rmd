@@ -98,7 +98,10 @@ league_history <- league_history[order(league_history$Date), ]
 league_history$week <- league_history$Date %>% cut('week') %>% ymd()
 
 league_history %<>% mutate(match_week = match(Date, unique(Date)))
+```
 
+
+```{r eval=FALSE, include=FALSE}
 library(plotly)
 library(htmlwidgets)
 
@@ -110,19 +113,32 @@ myPlot
 ```
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 library(dygraphs)
+library(data.table)
 
 dy_prep <- league_history %>% select(Date, Team, Elo) %>% setDT()
 
 dy_data <- dcast(dy_prep, Date ~ Team, value.var = 'Elo', fun.aggregate = mean, fill = NA) %>% fill(names(.))
 
-dygraph(dy_data) %>% dyHighlight(highlightSeriesOpts = list(strokeWidth = 3))
+dygraph(dy_data) %>% 
+  dyHighlight(highlightSeriesOpts = list(strokeWidth = 3, highlightSeriesBackgroundAlpha = 0.2)) %>%
+  dyLegend(show = "follow", labelsSeparateLines = TRUE) %>%
+  dyRangeSelector(dateWindow = c(min(dy_data$Date), max(dy_data$Date)))
+```
 
+```{r, highcharts}
+library(highcharter) 
+league_history$Elo %<>% round(2)
+#hc <- highchart(type = "stock") %>%
+#  hc_add_series(league_history, type = "line", hcaes(x=Date, y=Elo, group=Team))
+
+hc <- hchart(league_history, 'line', hcaes(x=Date, y=Elo, group=Team))
+hc
 ```
 
 
-```{r, ELO Plot}
+```{r eval=FALSE, include=FALSE}
 ## This is an ugly, ugly plot, but it looks as expected - may be better to show as scatter or individual seasons
 
 elo_plot <- ggplot()
@@ -143,5 +159,18 @@ for (team in team_list){
 ```
 ```{r, One Club History}
 team_list[['Gloucester']]$history
+```
+
+```{r, accuracies}
+dates <- sapply(game_list, with, date) %>% as.Date(origin = '1970-01-01')
+point_diffs <- sapply(game_list, with, point_diff)
+spreads <- sapply(game_list, with, spread)
+
+pred_df <- data.frame(dates, point_diffs, spreads)
+pred_df$error <- pred_df$spreads - pred_df$point_diffs
+
+season_2017 <- pred_df[which(pred_df$dates > '2017-06-01' %>% ymd()), ]
+
+ggplot(season_2017, aes(x=dates, y=error)) + geom_line()
 ```
 
