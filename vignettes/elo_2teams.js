@@ -38,6 +38,13 @@ svg.append("text")
         .style("text-decoration", "underline")
         .text("ELO Scores of English Premiership Clubs");
 
+svg.append("text")
+        .attr("y", margin.top+15)
+        .attr("x", (width / 2))
+        .attr("text-anchor", "middle")
+        .style("font-size", "10px")
+        .text("Zoom along x-axis, double click to reset");
+
 yAxis = svg.append("g")
     .attr("class", "y axis")
     .attr("transform", "translate(" + margin.left + ",0)")
@@ -67,9 +74,15 @@ var color = d3.scaleOrdinal()
   .domain(res)
   .range(['#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666'])
 
-svg.selectAll(".line")
-      .data(sumstat)
-      .enter()
+
+var series = svg.selectAll(".series")
+        .data(sumstat)
+        .enter().append("g")
+        .attr("class", "series")
+        .attr("clip-path", "url(#clip)")
+
+
+series
       .append("path")
         .attr("fill", "none")
         .attr("stroke", function(d){ return color(d.key) })
@@ -79,6 +92,7 @@ svg.selectAll(".line")
           return d3.line()
             .x(function(d) { return x(parseTime(d.Date)); })
             .y(function(d) { return y(d.Elo); })
+            .curve(d3.curveMonotoneX)
             (d.values)
         })
   .on("mouseover", handleMouseOver)
@@ -87,13 +101,14 @@ svg.selectAll(".line")
   .on("click", handleClick);
 
 
+
+
+
   function handleMouseOver(d, i) {
       d3.select(this).transition().attr("stroke-width", 8);
       d3.select(this).transition().attr('opacity', this.opacity = (this.opacity == 1 ? 1 : .5));
       d3.select('#tooltip').transition().style('opacity', 1);
           }
-
-var bisect = d3.bisector(function(d) { return d.x; }).left;
 
 function handleMouseMove(d, i) {
       d3.select('#tooltip')
@@ -114,3 +129,72 @@ function handleClick(d, i) {
     }
 
 //TO DO - port over zoom from elo_chart.js
+
+    // Add a clipPath: everything out of this area won't be drawn.
+    var clip = svg.append("defs").append("svg:clipPath")
+        .attr("id", "clip")
+        .append("svg:rect")
+        .attr("width", width-margin.right-margin.left)
+        .attr("height", height-margin.bottom )
+        .attr("x", margin.left)
+        .attr("y", margin.top);
+
+    // Add brushing
+    var brush = d3.brushX()                   // Add the brush feature using the d3.brush function
+        .extent([[margin.left,(height-margin.bottom)], [(width - margin.right),(height)]])
+        .on("end", updateChart)
+
+    svg
+      .append("g")
+        .attr("class", "brush")
+        .call(brush)
+        .call(brush.move, [(width - margin.right - 25), (width - margin.right)])
+
+    var idleTimeout
+    function idled() { idleTimeout = null; }
+
+   // A function that update the chart for given boundaries
+    function updateChart() {
+
+      // What are the selected boundaries?
+      extent = d3.event.selection
+
+      // If no selection, back to initial coordinate. Otherwise, update X axis domain
+      if(!extent){
+        if (!idleTimeout) return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
+        x.domain([ 4,8])
+      }else{
+        x.domain([ x.invert(extent[0]), x.invert(extent[1]) ])
+        svg.select(".brush").call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
+      }
+
+      // Update axis and line position
+      xAxis.transition().duration(1000).call(d3.axisBottom(x))
+      series
+          .select('path')
+          .transition()
+          .duration(1000)
+          .attr("d", function(d){
+          return d3.line()
+            .x(function(d) { return x(parseTime(d.Date)); })
+            .y(function(d) { return y(d.Elo); })
+            .curve(d3.curveMonotoneX)
+            (d.values)
+        })
+    }
+
+    svg.on("dblclick",function(){
+      x.domain(d3.extent(data, function(d) { return parseTime(d.Date); }))
+      xAxis.transition().call(d3.axisBottom(x))
+      series
+        .select('path')
+        .transition()
+        .attr("d", function(d){
+          return d3.line()
+            .x(function(d) { return x(parseTime(d.Date)); })
+            .y(function(d) { return y(d.Elo); })
+            .curve(d3.curveMonotoneX)
+            (d.values)
+        })
+    });
+
