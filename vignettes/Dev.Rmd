@@ -101,6 +101,7 @@ league_history %<>% mutate(match_week = match(Date, unique(Date)))
 ```
 
 
+
 ```{r eval=FALSE, include=FALSE}
 library(plotly)
 library(htmlwidgets)
@@ -135,6 +136,10 @@ league_history$Elo %<>% round(2)
 
 hc <- hchart(league_history, 'line', hcaes(x=Date, y=Elo, group=Team))
 hc
+```
+
+```{d3, data=dy_prep, options=list(color='steelblue')}
+
 ```
 
 
