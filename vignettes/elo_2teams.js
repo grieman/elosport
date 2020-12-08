@@ -30,6 +30,14 @@ svg.append("text")
       .style("text-anchor", "middle")
       .text("Date");
 
+svg.append("text")
+        .attr("y", margin.top)
+        .attr("x", (width / 2))
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .style("text-decoration", "underline")
+        .text("ELO Scores of English Premiership Clubs");
+
 yAxis = svg.append("g")
     .attr("class", "y axis")
     .attr("transform", "translate(" + margin.left + ",0)")
@@ -105,3 +113,4 @@ function handleClick(d, i) {
       d3.select(this).transition().attr('opacity', this.opacity = (this.opacity == 1 ? 0.2 : 1));
     }
 
+//TO DO - port over zoom from elo_chart.js
